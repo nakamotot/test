@@ -80,7 +80,7 @@ def setData():
 		c.execute(query)
 		conn.commit()
 		conn.close()
-		
+		setData()
 	
 	def update(sender):
 		_index = ds.selected_row
