@@ -68,15 +68,22 @@ def setData():
 		_quantity = addform['quantity'].text
 		_price = addform['price'].text
 		_totalprice = str(int(addform['quantity'].text) * int(addform['price'].text))
-		
 		insertDB({"name":_name,"quantity":int(_quantity),"price":int(_price)})
-		
 		setData()	
 		v['debug'].text = _totalprice
 		
 	def deleteRow(sender):
 		_index = ds.selected_row
-					
+		query = 'delete from stocks where name == "'+data[_index]['name']+'"'
+		conn = sqlite3.connect(dbname)
+		c= conn.cursor()
+		c.execute(query)
+		conn.commit()
+		conn.close()
+		
+	
+	def update(sender):
+		_index = ds.selected_row
 		v['debug'].text = str(ds.items[_index])
 #----------------------- funcitons ^ -----------------
 
