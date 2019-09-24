@@ -1,7 +1,45 @@
 import ui
-import csv
-import re
- 
+import sqlite3
+
+dbname = 'test.db'
+#c.execute("CREATE TABLE stocks(name text , quantity real , price real, totalprice real)")
+	#c.execute('drop table stocks')
+	#c.execute("INSERT INTo stocks VALUES('apple',5,100,500)")
+
+def insertDB(data):
+	print(data['name'])
+	conn = sqlite3.connect(dbname)
+	c= conn.cursor()
+	_totalprice = str(data['quantity'] * data['price'])
+	c.execute("INSERT INTO stocks VALUES('"+data['name']+"',"+str(data['quantity'])+","+str(data['price'])+","+_totalprice+")")
+	
+	#for row in c.execute('SELECT*FROM stocks'):
+		#print(row)
+	
+	conn.commit()
+	conn.close()
+
+def getData(query):
+	_data = []
+	conn = sqlite3.connect(dbname)
+	c= conn.cursor()
+	
+	
+	c.execute('PRAGMA table_info("stocks")')
+	
+	col_name = []
+	for colname in c.fetchall():
+		col_name.append(colname[1])
+	
+	for i,row in enumerate(c.execute(query)):
+		_obj = {}
+		for n,r in enumerate(row):
+			_obj[col_name[n]]=r
+		_data.append(_obj)
+	conn.commit()
+	conn.close()
+	return _data
+
 v = ui.load_view('test')
 
 data = []
@@ -10,8 +48,6 @@ def setData():
 	
 	def showData(sender):
 		_index = ds.selected_row
-		
-		v['debug'].text = 'price:'+str(data[_index]['price'])
 		_data = ui.ListDataSource(['price:'+str(data[_index]['price']),'quantity:'+str(data[_index]['quantity']),'totalprice:'+str(data[_index]['totalprice'])])
 		dataTable.data_source = dataTable.delegate = _data
 		dataTable.reload_data()
@@ -33,26 +69,13 @@ def setData():
 		_price = addform['price'].text
 		_totalprice = str(int(addform['quantity'].text) * int(addform['price'].text))
 		
-		f=open('test.csv','a')
-		f.write('\n'+_name + ',' + _quantity + ',' + _price + ',' + _totalprice)
-		f.close()
+		insertDB({"name":_name,"quantity":int(_quantity),"price":int(_price)})
 		
 		setData()	
 		v['debug'].text = _totalprice
 		
 	def deleteRow(sender):
 		_index = ds.selected_row
-		lines = list()
-		
-		f = open('test.csv')
-		reader = csv.reader(f)
-		
-		for row in reader:
-			lines.append(row)
-			
-		lines.pop(_index)	
-		
-		print(lines)
 					
 		v['debug'].text = str(ds.items[_index])
 #----------------------- funcitons ^ -----------------
@@ -62,20 +85,10 @@ def setData():
 	data = []
 	listname = []
 	
-	f=open('test.csv')
-	reader = csv.DictReader(f)
-	l=[row for row in reader]
+	data = getData('SELECT * FROM stocks')
 	
-	for index,item in enumerate(l):
-		_data={
-			'id':index,
-			'name':item['name'],
-			'price':item['price'],
-			'quantity':item['quantity'],
-			'totalprice':item['totalprice']
-			}
-		data.append(_data)
-		listname.append(_data['name'])
+	for item in data:
+		listname.append(item['name'])
 		
 		table = v['table1']
 		
@@ -99,8 +112,6 @@ def setData():
 		deleteBtn = v['scrollview1']['delete']
 		deleteBtn.action = deleteRow
 		
-		f.close()
-
 setData()
 
 v.present('sheet')
